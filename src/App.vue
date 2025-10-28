@@ -74,7 +74,7 @@
                   <v-img :src="disconnectedLogo" alt="Disconnected status logo" />
                 </v-avatar>
               </template>
-              {{ connected ? 'Connected' : 'Disconnected' }}
+              {{ connectionChipLabel }}
             </v-chip>
           </v-system-bar>
 
@@ -844,6 +844,15 @@ const statusLabel = computed(() =>
   connected.value ? statusDetails.value : 'No device connected. Choose a port to begin.'
 );
 
+const connectionChipLabel = computed(() => {
+  if (!connected.value) {
+    return 'Disconnected';
+  }
+
+  const name = chipDetails.value?.name?.trim();
+  return name ? `Connected: ${name}` : 'Connected';
+});
+
 const canFlash = computed(
   () => connected.value && Boolean(firmwareBuffer.value) && !flashInProgress.value
 );
@@ -1075,7 +1084,7 @@ async function connect() {
     };
 
     connected.value = true;
-    statusDetails.value = `Connected to ${chipName} @ ${baudrate} baud.`;
+    statusDetails.value = 'Device connected. Ready to flash.';
     appendLog(`Connection established. Ready to flash.`);
   } catch (error) {
     if (error?.name === 'AbortError' || error?.name === 'NotFoundError') {
