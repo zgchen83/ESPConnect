@@ -367,6 +367,37 @@ const FACT_DISPLAY_ORDER = [
   'Connection Baud',
 ];
 
+const FACT_GROUP_CONFIG = [
+  {
+    title: 'Package & Revision',
+    icon: 'mdi-chip',
+    labels: ['Chip Variant', 'Package Form Factor', 'Revision'],
+  },
+  {
+    title: 'Embedded Memory',
+    icon: 'mdi-memory',
+    labels: [
+      'Embedded Flash',
+      'Embedded PSRAM',
+      'Flash ID',
+      'Flash Manufacturer',
+      'Flash Device',
+      'Flash Vendor (eFuse)',
+      'PSRAM Vendor (eFuse)',
+    ],
+  },
+  {
+    title: 'Security',
+    icon: 'mdi-shield-key-outline',
+    labels: ['eFuse Block Version'],
+  },
+  {
+    title: 'Connection',
+    icon: 'mdi-usb-port',
+    labels: ['USB Bridge', 'Connection Baud'],
+  },
+];
+
 function sortFacts(facts) {
   return [...facts].sort((a, b) => {
     const orderA = FACT_DISPLAY_ORDER.indexOf(a.label);
@@ -386,6 +417,37 @@ function sortFacts(facts) {
 
     return a.label.localeCompare(b.label);
   });
+}
+
+function buildFactGroups(facts) {
+  const groups = [];
+  const assigned = new Set();
+
+  for (const config of FACT_GROUP_CONFIG) {
+    const items = facts.filter(fact => {
+      if (assigned.has(fact.label)) return false;
+      return config.labels.includes(fact.label);
+    });
+    if (items.length) {
+      items.forEach(item => assigned.add(item.label));
+      groups.push({
+        title: config.title,
+        icon: config.icon,
+        items,
+      });
+    }
+  }
+
+  const remaining = facts.filter(fact => !assigned.has(fact.label));
+  if (remaining.length) {
+    groups.push({
+      title: 'Additional Details',
+      icon: 'mdi-clipboard-text-outline',
+      items: remaining,
+    });
+  }
+
+  return groups;
 }
 
 function formatBytes(bytes) {
@@ -1186,6 +1248,7 @@ async function connect() {
 
     const featuresDisplay = featureList.filter(Boolean).map(humanizeFeature);
     const orderedFacts = sortFacts(facts);
+    const factGroups = buildFactGroups(orderedFacts);
 
     chipDetails.value = {
       name: chipName,
@@ -1195,6 +1258,7 @@ async function connect() {
       flashSize: flashLabel,
       crystal: crystalLabel,
       facts: orderedFacts,
+      factGroups,
     };
 
       connected.value = true;

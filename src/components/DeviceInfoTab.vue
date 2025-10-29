@@ -73,24 +73,40 @@
             </v-col>
           </v-row>
 
-          <div v-if="chipDetails.facts?.length" class="extra-details">
+          <div v-if="chipDetails.factGroups?.length" class="detail-groups">
             <div class="section-title mb-3">
-              <v-icon size="18" class="me-2">mdi-clipboard-text-outline</v-icon>
+              <v-icon size="18" class="me-2">mdi-chip</v-icon>
               Hardware Details
             </div>
-            <v-table density="comfortable" class="extra-details-table">
-              <tbody>
-                <tr v-for="fact in chipDetails.facts" :key="fact.label">
-                  <td class="extra-details-label">
-                    <div class="d-flex align-center gap-2">
-                      <v-icon v-if="fact.icon" size="16">{{ fact.icon }}</v-icon>
-                      <span>{{ fact.label }}</span>
+            <v-row dense class="detail-group-row">
+              <v-col
+                v-for="group in chipDetails.factGroups"
+                :key="group.title"
+                cols="12"
+                md="6"
+              >
+                <v-card class="detail-card" elevation="0" variant="tonal">
+                  <v-card-title class="detail-card__title">
+                    <v-icon size="18" class="me-2">{{ group.icon }}</v-icon>
+                    {{ group.title }}
+                  </v-card-title>
+                  <v-divider class="detail-card__divider" />
+                  <v-card-text class="detail-card__body">
+                    <div
+                      v-for="fact in group.items"
+                      :key="fact.label"
+                      class="detail-card__item"
+                    >
+                      <div class="detail-card__item-label">
+                        <v-icon v-if="fact.icon" size="16" class="me-2">{{ fact.icon }}</v-icon>
+                        <span>{{ fact.label }}</span>
+                      </div>
+                      <div class="detail-card__item-value">{{ fact.value }}</div>
                     </div>
-                  </td>
-                  <td class="extra-details-value">{{ fact.value }}</td>
-                </tr>
-              </tbody>
-            </v-table>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
           </div>
         </v-card-text>
       </v-card>
@@ -252,48 +268,81 @@ defineProps({
   color: color-mix(in srgb, var(--v-theme-on-surface) 55%, transparent);
 }
 
-.extra-details {
+.detail-groups {
+  margin-top: 28px;
+}
+
+.detail-group-row {
+  margin-bottom: -12px;
+}
+
+.detail-card {
   border-radius: 18px;
-  padding: 20px;
-  background: color-mix(in srgb, var(--v-theme-surface) 92%, transparent);
   border: 1px solid color-mix(in srgb, var(--v-theme-on-surface) 10%, transparent);
+  background: color-mix(in srgb, var(--v-theme-surface) 96%, transparent);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.extra-details-table {
-  border-radius: 12px;
-  overflow: hidden;
+.detail-card__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--v-theme-on-surface) 82%, transparent);
+  padding: 18px 22px 12px;
 }
 
-.extra-details-table :deep(table) {
-  width: 100%;
-  border-collapse: collapse;
+.detail-card__divider {
+  margin: 0 18px;
 }
 
-.extra-details-table :deep(td) {
-  padding: 12px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--v-theme-on-surface) 12%, transparent);
+.detail-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 22px 22px;
 }
 
-.extra-details-table :deep(tbody tr:last-child td) {
-  border-bottom: none;
+.detail-card__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.extra-details-label {
+.detail-card__item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: color-mix(in srgb, var(--v-theme-on-surface) 65%, transparent);
   font-size: 0.85rem;
   letter-spacing: 0.01em;
 }
 
-.extra-details-value {
+.detail-card__item-value {
   font-weight: 600;
   font-size: 0.9rem;
-  text-align: right;
   color: color-mix(in srgb, var(--v-theme-on-surface) 92%, transparent);
+  text-align: right;
   word-break: break-word;
 }
 
-@media (min-width: 960px) {
-  .extra-details-value {
+@media (max-width: 959px) {
+  .detail-group-row {
+    margin-bottom: 0;
+  }
+}
+
+@media (max-width: 599px) {
+  .detail-card__item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .detail-card__item-value {
     text-align: left;
   }
 }
