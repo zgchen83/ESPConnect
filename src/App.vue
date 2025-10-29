@@ -779,6 +779,9 @@ const RESERVED_SEGMENTS = [
 ];
 
 const partitionSegments = computed(() => {
+  if (!connected.value) {
+    return [];
+  }
   const sortedPartitions = [...partitionTable.value].sort((a, b) => a.offset - b.offset);
   const totalFlash = flashSizeBytes.value && flashSizeBytes.value > 0 ? flashSizeBytes.value : null;
   const segments = [];
