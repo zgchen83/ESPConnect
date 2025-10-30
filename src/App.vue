@@ -620,7 +620,7 @@ const connected = ref(false);
 const busy = ref(false);
 const flashInProgress = ref(false);
 const flashProgress = ref(0);
-const selectedBaud = ref('921600');
+const selectedBaud = ref('115200');
 const baudrateOptions = ['115200', '230400', '460800', '921600'];
 const flashOffset = ref('0x0');
 const eraseFlash = ref(false);
@@ -1124,6 +1124,8 @@ function clearLog() {
 }
 
 let monitorDecoder = null;
+let monitorNoiseChunks = 0;
+let monitorNoiseWarned = false;
 
 function appendMonitorChunk(bytes) {
   if (!bytes || !bytes.length) return;
@@ -1132,6 +1134,33 @@ function appendMonitorChunk(bytes) {
   }
   const text = monitorDecoder.decode(bytes, { stream: true });
   if (!text) return;
+  const printable = text.replace(/[^\x20-\x7e\r\n\t]/g, '');
+  if (text.length > 0) {
+    const readableRatio = printable.length / text.length;
+    if (readableRatio < 0.2) {
+      monitorNoiseChunks += 1;
+      if (!monitorNoiseWarned && monitorNoiseChunks >= 3 && !monitorError.value) {
+        const activeBaud =
+          transport.value?.baudrate ||
+          Number.parseInt(selectedBaud.value, 10) ||
+          DEFAULT_ROM_BAUD;
+        monitorError.value =
+          `Monitor data looks binary. Check that the device UART baud matches the selected ` +
+          `rate (currently ${activeBaud.toLocaleString()} bps). Try switching to 115200 bps and reconnecting.`;
+        monitorNoiseWarned = true;
+      }
+    } else {
+      monitorNoiseChunks = 0;
+      if (
+        monitorNoiseWarned &&
+        monitorError.value &&
+        monitorError.value.startsWith('Monitor data looks binary.')
+      ) {
+        monitorError.value = null;
+      }
+      monitorNoiseWarned = false;
+    }
+  }
   monitorText.value += text;
   if (monitorText.value.length > MONITOR_BUFFER_LIMIT) {
     monitorText.value = monitorText.value.slice(-MONITOR_BUFFER_LIMIT);
@@ -1141,6 +1170,8 @@ function appendMonitorChunk(bytes) {
 function clearMonitorOutput() {
   monitorText.value = '';
   monitorError.value = null;
+  monitorNoiseChunks = 0;
+  monitorNoiseWarned = false;
 }
 
 function ensureTransportReader() {
@@ -1177,6 +1208,8 @@ async function startMonitor() {
   }
   monitorError.value = null;
   monitorDecoder = new TextDecoder();
+  monitorNoiseChunks = 0;
+  monitorNoiseWarned = false;
   const controller = new AbortController();
   monitorAbortController.value = controller;
   monitorActive.value = true;
