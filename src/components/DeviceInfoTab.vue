@@ -1,6 +1,6 @@
 <template>
   <v-expand-transition>
-    <div v-if="chipDetails" class="device-info-wrapper">
+    <div v-if="details" class="device-info-wrapper">
       <v-card class="device-card" elevation="0" variant="flat">
         <v-card-text class="device-card__body">
           <div class="device-header">
@@ -8,21 +8,21 @@
               <v-icon size="38">mdi-chip</v-icon>
             </v-avatar>
             <div class="device-header__text">
-              <div class="device-chip-name">{{ chipDetails.description || chipDetails.name }}</div>
+              <div class="device-chip-name">{{ details.description || details.name }}</div>
               <div v-if="hasDistinctDescription" class="device-chip-alias">
-                {{ chipDetails.name }}
+                {{ details.name }}
               </div>
               <div
-                v-if="revisionLabel || chipDetails.mac"
+                v-if="revisionLabel || details.mac"
                 class="device-chip-subline"
               >
                 <span v-if="revisionLabel" class="device-chip-subline-item">
                   <v-icon size="20">mdi-update</v-icon>
                   {{ revisionLabel }}
                 </span>
-                <span v-if="chipDetails.mac" class="device-chip-subline-item">
+                <span v-if="details.mac" class="device-chip-subline-item">
                   <v-icon size="20">mdi-wifi</v-icon>
-                  {{ chipDetails.mac }}
+                  {{ details.mac }}
                 </span>
               </div>
             </div>
@@ -34,9 +34,9 @@
                 <v-card-text class="metric-card__body">
                   <v-icon class="metric-icon" size="22">mdi-memory</v-icon>
                   <div class="metric-label">Flash Size</div>
-                  <div class="metric-value">{{ chipDetails.flashSize || 'Unknown' }}</div>
-                  <div v-if="chipDetails.crystal" class="metric-caption">
-                    Crystal {{ chipDetails.crystal }}
+                  <div class="metric-value">{{ details.flashSize || 'Unknown' }}</div>
+                  <div v-if="details.crystal" class="metric-caption">
+                    Crystal {{ details.crystal }}
                   </div>
                 </v-card-text>
               </v-card>
@@ -47,21 +47,21 @@
                   <v-icon class="metric-icon" size="22">mdi-tune-variant</v-icon>
                   <div class="metric-label">Feature Set</div>
                   <div class="metric-value">
-                    {{ chipDetails.features?.length ? `${chipDetails.features.length} enabled` : 'Not reported' }}
+                    {{ details.features?.length ? `${details.features.length} enabled` : 'Not reported' }}
                   </div>
                   <div
-                    v-if="chipDetails.features?.length"
+                    v-if="details.features?.length"
                     class="metric-caption"
                   >
                     Reported capabilities
                   </div>
                   <v-chip-group
-                    v-if="chipDetails.features?.length"
+                    v-if="details.features?.length"
                     column
                     class="feature-chip-group metric-chip-group"
                   >
                     <v-chip
-                      v-for="feature in chipDetails.features"
+                      v-for="feature in details.features"
                       :key="feature"
                       class="feature-chip"
                       color="primary"
@@ -90,14 +90,14 @@
             </v-col>
           </v-row>
 
-          <div v-if="chipDetails.factGroups?.length" class="detail-groups">
+          <div v-if="details.factGroups?.length" class="detail-groups">
             <div class="section-title mb-3">
               <v-icon size="18" class="me-2">mdi-chip</v-icon>
               Hardware Details
             </div>
             <v-row dense class="detail-group-row">
               <v-col
-                v-for="group in chipDetails.factGroups"
+                v-for="group in details.factGroups"
                 :key="group.title"
                 cols="12"
                 md="6"
@@ -141,17 +141,26 @@ const props = defineProps({
   },
 });
 
+const details = computed(() => {
+  const candidate = props.chipDetails;
+  if (candidate && typeof candidate === 'object' && 'value' in candidate && !Array.isArray(candidate)) {
+    return candidate.value ?? null;
+  }
+  return candidate ?? null;
+});
+
 const revisionLabel = computed(() => {
-  const facts = props.chipDetails?.facts;
+  const facts = details.value?.facts;
   if (!Array.isArray(facts)) return null;
   return facts.find(fact => fact.label === 'Revision')?.value ?? null;
 });
 
 const hasDistinctDescription = computed(() => {
-  if (!props.chipDetails) return false;
-  const { name, description } = props.chipDetails;
+  if (!details.value) return false;
+  const { name, description } = details.value;
   return Boolean(description) && description !== name;
 });
+
 </script>
 
 <style scoped>

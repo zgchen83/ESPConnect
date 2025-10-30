@@ -1126,6 +1126,8 @@ async function connect() {
 
     const chipName = await loader.value.main('default_reset');
     const chip = loader.value.chip;
+    connected.value = true;
+    appendLog(`Handshake complete with ${chipName}. Collecting device details...`, '[debug]');
     if (chip?.CHIP_NAME === 'ESP32-C6' && chip.SPI_REG_BASE === 0x60002000) {
       chip.SPI_REG_BASE = 0x60003000;
       appendLog(
@@ -1337,9 +1339,15 @@ async function connect() {
       facts: orderedFacts,
       factGroups,
     };
+    activeTab.value = 'info';
+    appendLog(
+      `Loaded device details: ${chipDetails.value.name}, ${orderedFacts.length} facts.`,
+      '[debug]'
+    );
 
-      connected.value = true;
-      appendLog(`Connection established. Ready to flash.`);
+    connected.value = true;
+    showBootDialog.value = false;
+    appendLog(`Connection established. Ready to flash.`);
   } catch (error) {
     if (error?.name === 'AbortError' || error?.name === 'NotFoundError') {
       appendLog('Port selection was cancelled.');
@@ -1351,6 +1359,7 @@ async function connect() {
     await disconnectTransport();
   } finally {
     busy.value = false;
+    appendLog(`Connect flow finished (busy=${busy.value}).`, '[debug]');
   }
 }
 
@@ -1518,5 +1527,3 @@ onBeforeUnmount(() => {
 }
 
 </style>
-
-
