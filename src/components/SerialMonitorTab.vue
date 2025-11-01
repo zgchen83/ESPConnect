@@ -45,7 +45,7 @@
             variant="text"
             size="small"
             prepend-icon="mdi-eraser"
-            :disabled="!monitorText"
+            :disabled="!hasMonitorOutput"
             @click="emit('clear-monitor')"
           >
             Clear
@@ -63,9 +63,9 @@
         </div>
       </v-card-title>
       <v-divider />
-      <v-card-text class="monitor-terminal">
-        <pre ref="outputEl" class="monitor-terminal__output">
-{{ monitorText || 'Monitor output will appear here once started.' }}
+      <v-card-text ref="terminalEl" class="monitor-terminal">
+        <pre class="monitor-terminal__output">
+{{ displayText }}
         </pre>
       </v-card-text>
     </v-card>
@@ -83,7 +83,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const props = defineProps({
   monitorText: {
@@ -110,16 +110,45 @@ const props = defineProps({
 
 const emit = defineEmits(['start-monitor', 'stop-monitor', 'clear-monitor', 'reset-board']);
 
-const outputEl = ref(null);
+const terminalEl = ref(null);
+const displayText = computed(
+  () => props.monitorText || 'Monitor output will appear here once started.'
+);
+const hasMonitorOutput = computed(() => Boolean(props.monitorText && props.monitorText.length));
 
 watch(
   () => props.monitorText,
-  () => {
-    if (outputEl.value) {
-      outputEl.value.scrollTop = outputEl.value.scrollHeight;
-    }
+  async () => {
+    await nextTick();
+    const target =
+      terminalEl.value && '$el' in terminalEl.value ? terminalEl.value.$el : terminalEl.value;
+    const el = target instanceof HTMLElement ? target : null;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
   }
 );
+
+watch(
+  () => props.monitorActive,
+  async active => {
+    if (!active) return;
+    await nextTick();
+    const target =
+      terminalEl.value && '$el' in terminalEl.value ? terminalEl.value.$el : terminalEl.value;
+    const el = target instanceof HTMLElement ? target : null;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }
+);
+
+onMounted(() => {
+  const target =
+    terminalEl.value && '$el' in terminalEl.value ? terminalEl.value.$el : terminalEl.value;
+  const el = target instanceof HTMLElement ? target : null;
+  if (el) {
+    el.scrollTop = el.scrollHeight;
+  }
+});
 </script>
 
 <style scoped>
