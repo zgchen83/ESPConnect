@@ -750,6 +750,9 @@ const monitorActive = ref(false);
 const monitorError = ref(null);
 const monitorAbortController = ref(null);
 const MONITOR_BUFFER_LIMIT = 20000;
+let monitorPendingText = '';
+let monitorFlushHandle = null;
+let monitorFlushUsingAnimationFrame = false;
 const currentPort = ref(null);
 const transport = ref(null);
 const loader = ref(null);
@@ -1364,6 +1367,47 @@ let monitorNoiseChunks = 0;
 let monitorNoiseWarned = false;
 let monitorAutoResetPerformed = false;
 
+function cancelMonitorFlush() {
+  if (monitorFlushHandle === null) {
+    return;
+  }
+  if (monitorFlushUsingAnimationFrame && typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function') {
+    window.cancelAnimationFrame(monitorFlushHandle);
+  } else {
+    clearTimeout(monitorFlushHandle);
+  }
+  monitorFlushHandle = null;
+  monitorFlushUsingAnimationFrame = false;
+}
+
+function flushPendingMonitorText() {
+  if (!monitorPendingText) {
+    return;
+  }
+  monitorText.value += monitorPendingText;
+  monitorPendingText = '';
+  if (monitorText.value.length > MONITOR_BUFFER_LIMIT) {
+    monitorText.value = monitorText.value.slice(-MONITOR_BUFFER_LIMIT);
+  }
+}
+
+function scheduleMonitorFlush() {
+  if (monitorFlushHandle !== null) {
+    return;
+  }
+  const flush = () => {
+    monitorFlushHandle = null;
+    monitorFlushUsingAnimationFrame = false;
+    flushPendingMonitorText();
+  };
+  if (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function') {
+    monitorFlushUsingAnimationFrame = true;
+    monitorFlushHandle = window.requestAnimationFrame(flush);
+  } else {
+    monitorFlushHandle = setTimeout(flush, 16);
+  }
+}
+
 async function releaseTransportReader() {
   const transportInstance = transport.value;
   const reader = transportInstance?.reader;
@@ -1417,14 +1461,17 @@ function appendMonitorChunk(bytes) {
       monitorNoiseWarned = false;
     }
   }
-  monitorText.value += text;
-  if (monitorText.value.length > MONITOR_BUFFER_LIMIT) {
-    monitorText.value = monitorText.value.slice(-MONITOR_BUFFER_LIMIT);
+  monitorPendingText += text;
+  if (monitorPendingText.length > MONITOR_BUFFER_LIMIT * 2) {
+    monitorPendingText = monitorPendingText.slice(-MONITOR_BUFFER_LIMIT * 2);
   }
+  scheduleMonitorFlush();
 }
 
 function clearMonitorOutput() {
+  cancelMonitorFlush();
   monitorText.value = '';
+  monitorPendingText = '';
   monitorError.value = null;
   monitorNoiseChunks = 0;
   monitorNoiseWarned = false;
@@ -1452,6 +1499,7 @@ async function monitorLoop(signal) {
     if (!chunk || !chunk.length) continue;
     appendMonitorChunk(chunk);
   }
+  flushPendingMonitorText();
 }
 
 async function startMonitor() {
@@ -1469,6 +1517,9 @@ async function startMonitor() {
     monitorAutoResetPerformed = true;
   }
   monitorError.value = null;
+  cancelMonitorFlush();
+  flushPendingMonitorText();
+  monitorPendingText = '';
   monitorDecoder = new TextDecoder();
   monitorNoiseChunks = 0;
   monitorNoiseWarned = false;
@@ -1499,6 +1550,9 @@ async function stopMonitor() {
   await releaseTransportReader();
   monitorActive.value = false;
   monitorAbortController.value = null;
+  cancelMonitorFlush();
+  flushPendingMonitorText();
+  monitorPendingText = '';
   if (monitorDecoder) {
     try {
       monitorDecoder.decode(new Uint8Array(), { stream: false });
@@ -1538,6 +1592,9 @@ async function disconnectTransport() {
       monitorAbortController.value = null;
       monitorActive.value = false;
     }
+    cancelMonitorFlush();
+    flushPendingMonitorText();
+    monitorPendingText = '';
     if (transport.value) {
       await transport.value.disconnect();
     } else if (currentPort.value) {
