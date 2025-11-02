@@ -75,16 +75,16 @@
           <div v-if="details.factGroups?.length" class="detail-groups">
             <v-row dense class="detail-group-row">
               <v-col v-for="group in details.factGroups" :key="group.title" cols="12" md="6">
-                <v-card class="detail-card" elevation="0" variant="tonal">
+                <v-card elevation="0" variant="tonal">
                   <v-card-title>
                     <v-icon class="me-2">{{ group.icon }}</v-icon>
                     {{ group.title }}
                   </v-card-title>
                   <v-divider class="detail-card__divider" />
-                  <v-card-text class="detail-card__body">
+                  <v-card-text>
                     <div v-for="fact in group.items" :key="fact.label" class="detail-card__item">
                       <div class="detail-card__item-label">
-                        <v-icon v-if="fact.icon" size="16" class="me-2">{{ fact.icon }}</v-icon>
+                        <v-icon v-if="fact.icon" class="me-2">{{ fact.icon }}</v-icon>
                         <span>{{ fact.label }}</span>
                       </div>
                       <div class="detail-card__item-value">{{ fact.value }}</div>
