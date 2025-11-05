@@ -206,6 +206,8 @@ const SUPPORTED_VENDORS = [
 ];
 
 const DEFAULT_ROM_BAUD = 115200;
+const DEFAULT_FLASH_BAUD = 921600;
+const MONITOR_BAUD = 115200;
 const DEBUG_SERIAL = false;
 
 const PACKAGE_LABELS = {
@@ -492,6 +494,29 @@ function formatBytes(bytes) {
   return `${formatted} ${units[idx]}`;
 }
 
+function formatErrorMessage(error) {
+  if (!error) {
+    return 'Unknown error';
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error instanceof Error) {
+    return error.message || String(error);
+  }
+  if (typeof error === 'object') {
+    if (error?.message) {
+      return error.message;
+    }
+    try {
+      return JSON.stringify(error);
+    } catch (serializationError) {
+      return String(error);
+    }
+  }
+  return String(error);
+}
+
 function formatVendorLabel(label) {
   if (!label) return label;
   return VENDOR_ALIASES[label] ?? label.replace(/_/g, ' ');
@@ -629,14 +654,17 @@ const flashInProgress = ref(false);
 const flashProgress = ref(0);
 const flashProgressDialog = reactive({ visible: false, value: 0, label: '' });
 const flashCancelRequested = ref(false);
-const selectedBaud = ref('115200');
+const selectedBaud = ref(String(DEFAULT_FLASH_BAUD));
 const baudrateOptions = ['115200', '230400', '460800', '921600'];
 const flashOffset = ref('0x0');
 const eraseFlash = ref(false);
 const selectedPreset = ref(null);
 const selectedPartitionDownload = ref(null);
 const integrityPartition = ref(null);
-const currentBaud = ref(DEFAULT_ROM_BAUD);
+const currentBaud = ref(DEFAULT_FLASH_BAUD);
+const lastFlashBaud = ref(DEFAULT_FLASH_BAUD);
+const previousMonitorBaud = ref(DEFAULT_FLASH_BAUD);
+let suspendBaudWatcher = false;
 const baudChangeBusy = ref(false);
 const maintenanceBusy = ref(false);
 const downloadProgress = reactive({ visible: false, value: 0, label: '' });
@@ -776,7 +804,55 @@ function toggleTheme() {
   currentTheme.value = isDarkTheme.value ? 'light' : 'dark';
 }
 
+async function setConnectionBaud(targetBaud, options = {}) {
+  const { remember = true, log = true, updateDropdown = true } = options;
+  const parsed = Number.parseInt(targetBaud, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return;
+  }
+
+  if (connected.value && loader.value) {
+    try {
+      baudChangeBusy.value = true;
+      if (log) {
+        appendLog('Changing baud to ' + parsed.toLocaleString() + ' bps...', '[debug]');
+      }
+      loader.value.baudrate = parsed;
+      await loader.value.changeBaud(parsed);
+      if (transport.value) {
+        transport.value.baudrate = parsed;
+      }
+      if (log) {
+        appendLog('Baud changed to ' + parsed.toLocaleString() + ' bps.', '[debug]');
+      }
+    } catch (error) {
+      if (log) {
+        appendLog('Baud change failed: ' + (error?.message || error), '[warn]');
+      }
+      throw error;
+    } finally {
+      baudChangeBusy.value = false;
+    }
+  }
+
+  currentBaud.value = parsed;
+  if (updateDropdown) {
+    const previousSuspendState = suspendBaudWatcher;
+    suspendBaudWatcher = true;
+    selectedBaud.value = String(parsed);
+    queueMicrotask(() => {
+      suspendBaudWatcher = previousSuspendState;
+    });
+  }
+  if (remember) {
+    lastFlashBaud.value = parsed;
+  }
+}
+
 watch(selectedBaud, async (value, oldValue) => {
+  if (suspendBaudWatcher) {
+    return;
+  }
   if (value === oldValue) {
     return;
   }
@@ -784,40 +860,53 @@ watch(selectedBaud, async (value, oldValue) => {
   if (!Number.isFinite(parsed) || parsed <= 0) {
     appendLog('Ignoring invalid baud selection: ' + value, '[warn]');
     if (oldValue != null) {
+      const previousSuspendState = suspendBaudWatcher;
+      suspendBaudWatcher = true;
       selectedBaud.value = oldValue;
+      queueMicrotask(() => {
+        suspendBaudWatcher = previousSuspendState;
+      });
     } else {
+      const previousSuspendState = suspendBaudWatcher;
+      suspendBaudWatcher = true;
       selectedBaud.value = String(currentBaud.value);
+      queueMicrotask(() => {
+        suspendBaudWatcher = previousSuspendState;
+      });
     }
     return;
   }
   if (!connected.value || !loader.value) {
     currentBaud.value = parsed;
+    lastFlashBaud.value = parsed;
     return;
   }
   if (parsed === currentBaud.value) {
+    lastFlashBaud.value = parsed;
     return;
   }
   if (busy.value || flashInProgress.value || maintenanceBusy.value || baudChangeBusy.value || monitorActive.value) {
-    appendLog('Cannot change baud while operations are running. Keeping ' + currentBaud.value.toLocaleString() + ' bps.', '[warn]');
+    appendLog(
+      'Cannot change baud while operations are running. Keeping ' + currentBaud.value.toLocaleString() + ' bps.',
+      '[warn]'
+    );
+    const previousSuspendState = suspendBaudWatcher;
+    suspendBaudWatcher = true;
     selectedBaud.value = String(currentBaud.value);
+    queueMicrotask(() => {
+      suspendBaudWatcher = previousSuspendState;
+    });
     return;
   }
   try {
-    baudChangeBusy.value = true;
-    appendLog('Changing baud to ' + parsed.toLocaleString() + ' bps...', '[debug]');
-    loader.value.baudrate = parsed;
-    await loader.value.changeBaud(parsed);
-    currentBaud.value = parsed;
-    if (transport.value) {
-      transport.value.baudrate = parsed;
-    }
-    selectedBaud.value = String(parsed);
-    appendLog('Baud changed to ' + parsed.toLocaleString() + ' bps.', '[debug]');
+    await setConnectionBaud(parsed, { remember: true, log: true, updateDropdown: false });
   } catch (error) {
-    appendLog('Baud change failed: ' + (error && error.message ? error.message : error), '[warn]');
+    const previousSuspendState = suspendBaudWatcher;
+    suspendBaudWatcher = true;
     selectedBaud.value = String(currentBaud.value);
-  } finally {
-    baudChangeBusy.value = false;
+    queueMicrotask(() => {
+      suspendBaudWatcher = previousSuspendState;
+    });
   }
 });
 
@@ -1866,6 +1955,17 @@ async function startMonitor() {
     appendLog('Monitor unavailable: transport not ready.', '[warn]');
     return;
   }
+  previousMonitorBaud.value = currentBaud.value || lastFlashBaud.value || DEFAULT_FLASH_BAUD;
+  if (currentBaud.value !== MONITOR_BAUD) {
+    try {
+      await setConnectionBaud(MONITOR_BAUD, { remember: false, log: true });
+    } catch (error) {
+      appendLog(
+        `Continuing monitor at ${currentBaud.value.toLocaleString()} bps (switch failed: ${error?.message || error}).`,
+        '[warn]'
+      );
+    }
+  }
   if (!monitorAutoResetPerformed) {
     await releaseTransportReader();
     appendLog('Auto-resetting board before starting serial monitor output.', '[debug]');
@@ -1918,6 +2018,18 @@ async function stopMonitor() {
     monitorDecoder = null;
   }
   appendLog('Serial monitor stopped.', '[debug]');
+  const restoreBaud =
+    previousMonitorBaud.value || lastFlashBaud.value || DEFAULT_FLASH_BAUD;
+  if (restoreBaud && restoreBaud !== currentBaud.value) {
+    try {
+      await setConnectionBaud(restoreBaud, { remember: true, log: true });
+    } catch (error) {
+      appendLog(
+        `Failed to restore baud rate (${error?.message || error}). Remaining at ${currentBaud.value.toLocaleString()} bps.`,
+        '[warn]'
+      );
+    }
+  }
 }
 
 async function resetBoard(options = {}) {
@@ -1969,7 +2081,7 @@ async function disconnectTransport() {
     monitorText.value = '';
     monitorAutoResetPerformed = false;
     resetMaintenanceState();
-    currentBaud.value = DEFAULT_ROM_BAUD;
+    currentBaud.value = DEFAULT_FLASH_BAUD;
     baudChangeBusy.value = false;
   }
 }
@@ -1992,19 +2104,21 @@ async function connect() {
   try {
     showBootDialog.value = false;
     currentPort.value = await navigator.serial.requestPort({ filters: SUPPORTED_VENDORS });
-    const baudrate = Number.parseInt(selectedBaud.value, 10) || DEFAULT_ROM_BAUD;
+    const desiredBaud = Number.parseInt(selectedBaud.value, 10) || DEFAULT_FLASH_BAUD;
+    const connectBaud = DEFAULT_ROM_BAUD;
+    lastFlashBaud.value = desiredBaud;
     const portDetails = currentPort.value?.getInfo ? currentPort.value.getInfo() : null;
     transport.value = new Transport(currentPort.value, DEBUG_SERIAL);
     transport.value.tracing = DEBUG_SERIAL;
     loader.value = new ESPLoader({
       transport: transport.value,
-      baudrate,
+      baudrate: connectBaud,
       romBaudrate: DEFAULT_ROM_BAUD,
       terminal,
       enableTracing: DEBUG_SERIAL,
     });
-    currentBaud.value = baudrate;
-    transport.value.baudrate = baudrate;
+    currentBaud.value = connectBaud;
+    transport.value.baudrate = connectBaud;
 
     const chipName = await loader.value.main('default_reset');
     const chip = loader.value.chip;
@@ -2016,6 +2130,32 @@ async function connect() {
         'Applied ESP32-C6 SPI register base workaround (0x60002000 → 0x60003000).',
         '[debug]'
       );
+    }
+
+    if (desiredBaud !== connectBaud) {
+      try {
+        await setConnectionBaud(desiredBaud, { remember: true, log: true, updateDropdown: false });
+        const previousSuspendState = suspendBaudWatcher;
+        suspendBaudWatcher = true;
+        selectedBaud.value = String(desiredBaud);
+        queueMicrotask(() => {
+          suspendBaudWatcher = previousSuspendState;
+        });
+      } catch (error) {
+        appendLog(
+          `Fast baud negotiation failed (${error?.message || error}). Staying at ${connectBaud.toLocaleString()} bps.`,
+          '[warn]'
+        );
+        lastFlashBaud.value = connectBaud;
+        const previousSuspendState = suspendBaudWatcher;
+        suspendBaudWatcher = true;
+        selectedBaud.value = String(connectBaud);
+        queueMicrotask(() => {
+          suspendBaudWatcher = previousSuspendState;
+        });
+      }
+    } else {
+      lastFlashBaud.value = desiredBaud;
     }
 
     const callChip = async method => {
@@ -2207,7 +2347,7 @@ async function connect() {
       pushFact('USB Bridge', formatUsbBridge(portDetails));
     }
 
-    pushFact('Connection Baud', `${baudrate.toLocaleString()} bps`);
+    pushFact('Connection Baud', `${currentBaud.value.toLocaleString()} bps`);
 
     const featuresDisplay = featureList.filter(Boolean).map(humanizeFeature);
     const orderedFacts = sortFacts(facts);
@@ -2236,8 +2376,9 @@ async function connect() {
     if (error?.name === 'AbortError' || error?.name === 'NotFoundError') {
       appendLog('Port selection was cancelled.');
     } else {
-      appendLog(`Connection failed: ${error?.message || error}`, '[error]');
-      lastErrorMessage.value = error?.message || String(error);
+      const message = formatErrorMessage(error);
+      appendLog(`Connection failed: ${message}`, '[error]');
+      lastErrorMessage.value = message;
       showBootDialog.value = true;
     }
     await disconnectTransport();

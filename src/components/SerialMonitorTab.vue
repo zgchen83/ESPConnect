@@ -62,6 +62,10 @@
           </v-btn>
         </div>
       </v-card-title>
+      <v-card-subtitle class="monitor-card__subtitle text-medium-emphasis">
+        Console pins run at 115200 bps automatically for reliable output. Flashing uses the baud
+        rate selected in the toolbar.
+      </v-card-subtitle>
       <v-divider />
       <v-card-text ref="terminalEl" class="monitor-terminal">
         <pre class="monitor-terminal__output">
@@ -214,6 +218,11 @@ onMounted(() => {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.monitor-card__subtitle {
+  font-size: 0.75rem;
+  padding: 0 24px 4px;
 }
 
 .monitor-terminal {

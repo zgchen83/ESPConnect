@@ -51,14 +51,19 @@
         </v-col>
       </v-row>
 
-      <v-checkbox
-        :model-value="eraseFlash"
-        label="Erase entire flash before writing"
-        density="comfortable"
-        hide-details
-        :disabled="busy || maintenanceBusy"
-        @update:model-value="value => emit('update:eraseFlash', value)"
-      />
+  <v-checkbox
+    :model-value="eraseFlash"
+    label="Erase entire flash before writing"
+    density="comfortable"
+    hide-details
+    :disabled="busy || maintenanceBusy"
+    @update:model-value="value => emit('update:eraseFlash', value)"
+  />
+
+      <p class="flash-tools__hint text-medium-emphasis">
+        Flashing runs at 921,600&nbsp;bps by default. Drop the baud if the device struggles to sync.
+        The serial monitor automatically switches to 115,200&nbsp;bps for stability.
+      </p>
 
       <v-btn
         color="primary"
@@ -694,6 +699,11 @@ function handleRegisterSelect(value) {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+
+.flash-tools__hint {
+  font-size: 0.78rem;
+  margin-top: -4px;
 }
 
 .download-progress {
