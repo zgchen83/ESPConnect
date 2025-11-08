@@ -77,31 +77,35 @@
             </v-window-item>
 
             <v-window-item value="spiffs">
-              <SpiffsManagerTab :partitions="spiffsPartitions" :selected-partition-id="spiffsState.selectedId"
-                :files="spiffsState.files" :status="spiffsState.status" :loading="spiffsState.loading"
-                :busy="spiffsState.busy" :saving="spiffsState.saving" :read-only="spiffsState.readOnly"
+              <SpiffsManagerTab v-if="connected" :partitions="spiffsPartitions"
+                :selected-partition-id="spiffsState.selectedId" :files="spiffsState.files"
+                :status="spiffsState.status" :loading="spiffsState.loading" :busy="spiffsState.busy"
+                :saving="spiffsState.saving" :read-only="spiffsState.readOnly"
                 :read-only-reason="spiffsState.readOnlyReason" :dirty="spiffsState.dirty"
                 :backup-done="spiffsState.backupDone || spiffsState.sessionBackupDone" :error="spiffsState.error"
                 :has-partition="hasSpiffsPartitionSelected" :has-client="Boolean(spiffsState.client)"
                 :usage="spiffsState.usage" :upload-blocked="spiffsState.uploadBlocked"
-                :upload-blocked-reason="spiffsState.uploadBlockedReason"
-                :is-file-viewable="isViewableSpiffsFile"
-                :get-file-preview-info="resolveSpiffsViewInfo"
-                @select-partition="handleSelectSpiffsPartition" @refresh="handleRefreshSpiffs"
-                @backup="handleSpiffsBackup" @restore="handleSpiffsRestore" @download-file="handleSpiffsDownloadFile"
-                @view-file="handleSpiffsView" @validate-upload="handleSpiffsUploadSelection"
-                @upload-file="handleSpiffsUpload" @delete-file="handleSpiffsDelete" @format="handleSpiffsFormat"
-                @save="handleSpiffsSave" />
+                :upload-blocked-reason="spiffsState.uploadBlockedReason" :is-file-viewable="isViewableSpiffsFile"
+                :get-file-preview-info="resolveSpiffsViewInfo" @select-partition="handleSelectSpiffsPartition"
+                @refresh="handleRefreshSpiffs" @backup="handleSpiffsBackup" @restore="handleSpiffsRestore"
+                @download-file="handleSpiffsDownloadFile" @view-file="handleSpiffsView"
+                @validate-upload="handleSpiffsUploadSelection" @upload-file="handleSpiffsUpload"
+                @delete-file="handleSpiffsDelete" @format="handleSpiffsFormat" @save="handleSpiffsSave" />
+              <DisconnectedState v-else icon="mdi-folder-key-outline" :min-height="420"
+                subtitle="Connect to an ESP32 to browse and edit SPIFFS files." />
             </v-window-item>
 
             <v-window-item value="apps">
-              <AppsTab :apps="appPartitions" :active-slot-id="activeAppSlotId" :active-summary="appActiveSummary"
-                :loading="appMetadataLoading" :error="appMetadataError" />
+              <AppsTab v-if="connected" :apps="appPartitions" :active-slot-id="activeAppSlotId"
+                :active-summary="appActiveSummary" :loading="appMetadataLoading" :error="appMetadataError" />
+              <DisconnectedState v-else icon="mdi-application-cog-outline" :min-height="420"
+                subtitle="Connect to a device to inspect OTA application slots." />
             </v-window-item>
 
             <v-window-item value="flash">
-              <FlashFirmwareTab v-model:flash-offset="flashOffset" v-model:selected-preset="selectedPreset"
-                v-model:erase-flash="eraseFlash" :offset-presets="offsetPresets" :busy="busy" :can-flash="canFlash"
+              <FlashFirmwareTab v-if="connected" v-model:flash-offset="flashOffset"
+                v-model:selected-preset="selectedPreset" v-model:erase-flash="eraseFlash"
+                :offset-presets="offsetPresets" :busy="busy" :can-flash="canFlash"
                 :flash-in-progress="flashInProgress" :flash-progress="flashProgress"
                 :flash-progress-dialog="flashProgressDialog" :maintenance-busy="maintenanceBusy"
                 :register-address="registerAddress" :register-value="registerValue"
@@ -126,6 +130,8 @@
                 @download-used-flash="handleDownloadUsedFlash" @cancel-flash="handleCancelFlash"
                 @erase-flash="handleEraseFlash" @cancel-download="handleCancelDownload"
                 @select-register="handleSelectRegister" />
+              <DisconnectedState v-else icon="mdi-chip" :min-height="420"
+                subtitle="Connect to your board to flash firmware or inspect registers." />
             </v-window-item>
             <v-window-item value="console">
               <SerialMonitorTab :monitor-text="monitorText" :monitor-active="monitorActive"
@@ -347,6 +353,7 @@ import SpiffsManagerTab from './components/SpiffsManagerTab.vue';
 import PartitionsTab from './components/PartitionsTab.vue';
 import SessionLogTab from './components/SessionLogTab.vue';
 import SerialMonitorTab from './components/SerialMonitorTab.vue';
+import DisconnectedState from './components/DisconnectedState.vue';
 import registerGuides from './data/register-guides.json';
 import { InMemorySpiffsClient } from './utils/spiffs/spiffsClient';
 
