@@ -1,103 +1,51 @@
 <template>
-  <div
-    class="filesystem-manager"
-    @dragover.prevent="handleDragOver"
-    @dragleave.prevent="handleDragLeave"
-    @drop.prevent="handleDrop"
-  >
-    <v-alert
-      v-if="error"
-      type="error"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-3"
-    >
+  <div class="filesystem-manager" @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave"
+    @drop.prevent="handleDrop">
+    <v-alert v-if="error" type="error" variant="tonal" density="comfortable" border="start" class="mb-3">
       {{ error }}
     </v-alert>
-    <v-alert
-      v-else-if="readOnly"
-      type="warning"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mb-3"
-    >
+    <v-alert v-else-if="readOnly" type="warning" variant="tonal" density="comfortable" border="start" class="mb-3">
       {{ readOnlyMessage }}
     </v-alert>
 
-    <v-card class="mb-4" variant="tonal">
-      <v-card-title class="text-subtitle-1">
-        <v-icon start size="18">mdi-folder-wrench</v-icon>
-        {{ partitionHeading }}
-      </v-card-title>
+    <v-card variant="tonal" prepend-icon="mdi-folder-wrench">
+      <template v-slot:title>
+        <span class="font-weight-black">{{ partitionHeading }}</span>
+      </template>
       <v-card-text class="d-flex flex-column gap-4">
-        <v-select
-          :items="partitions"
-          item-title="label"
-          item-value="id"
-          density="comfortable"
-          label="Partition"
-          :model-value="selectedPartitionId"
-          :disabled="loading || busy || saving || !partitions.length"
-          @update:model-value="value => emit('select-partition', value)"
-        />
+        <v-select :items="partitions" item-title="label" item-value="id" density="comfortable" label="Partition"
+          :model-value="selectedPartitionId" :disabled="loading || busy || saving || !partitions.length"
+          @update:model-value="value => emit('select-partition', value)" />
         <div class="filesystem-manager__controls">
-          <v-btn
-            color="primary"
-            variant="tonal"
-            :disabled="!hasPartition || loading || busy || saving"
-            @click="emit('refresh')"
-          >
+          <v-btn color="primary" variant="tonal" :disabled="!hasPartition || loading || busy || saving"
+            @click="emit('refresh')">
             <v-icon start>mdi-refresh</v-icon>
             Read
           </v-btn>
-          <v-btn
-            color="secondary"
-            variant="outlined"
-            :disabled="!hasPartition || loading || busy || saving"
-            @click="emit('backup')"
-          >
+          <v-btn color="secondary" variant="outlined" :disabled="!hasPartition || loading || busy || saving"
+            @click="emit('backup')">
             <v-icon start>mdi-content-save</v-icon>
             Backup
           </v-btn>
-          <v-btn
-            color="secondary"
-            variant="text"
-            :disabled="!hasPartition || loading || busy || saving"
-            @click="triggerRestore"
-          >
+          <v-btn color="secondary" variant="text" :disabled="!hasPartition || loading || busy || saving"
+            @click="triggerRestore">
             <v-icon start>mdi-upload</v-icon>
             Restore Image
           </v-btn>
-          <v-btn
-            color="error"
-            variant="text"
-            :disabled="readOnly || !hasClient || loading || busy || saving || !backupDone"
-            @click="emit('format')"
-          >
+          <v-btn color="error" variant="text"
+            :disabled="readOnly || !hasClient || loading || busy || saving || !backupDone" @click="emit('format')">
             <v-icon start>mdi-delete-sweep</v-icon>
             Format
           </v-btn>
           <v-spacer />
-          <v-btn
-            color="primary"
-            variant="elevated"
+          <v-btn color="primary" variant="elevated"
             :disabled="readOnly || !dirty || !backupDone || saving || loading || busy || !hasClient"
-            @click="emit('save')"
-          >
+            @click="emit('save')">
             <v-icon start>mdi-content-save-outline</v-icon>
             Save to Flash
           </v-btn>
         </div>
-        <v-alert
-          v-if="!backupDone"
-          type="warning"
-          variant="tonal"
-          density="comfortable"
-          border="start"
-          class="mt-2"
-        >
+        <v-alert v-if="!backupDone" type="warning" variant="tonal" density="comfortable" border="start" class="mt-2">
           Download a backup image first (use the "Backup" button once per session). "Save to Flash"
           becomes available after any successful backup made during this connection.
         </v-alert>
@@ -128,32 +76,17 @@
         </div>
         <div class="upload-row upload-row--split">
           <div class="upload-picker">
-            <v-file-input
-              v-model="uploadFile"
-              density="comfortable"
-              accept="*/*"
-              label="Select file"
-              prepend-icon="mdi-file-upload"
-              :disabled="readOnly || !hasClient || loading || busy || saving"
-            />
-            <v-btn
-              color="primary"
-              variant="tonal"
-              class="upload-row__cta"
+            <v-file-input v-model="uploadFile" density="comfortable" accept="*/*" label="Select file"
+              prepend-icon="mdi-file-upload" :disabled="readOnly || !hasClient || loading || busy || saving" />
+            <v-btn color="primary" variant="tonal" class="upload-row__cta"
               :disabled="readOnly || !uploadFile || !hasClient || loading || busy || saving || uploadBlocked"
-              @click="submitUpload"
-            >
+              @click="submitUpload">
               <v-icon start>mdi-upload</v-icon>
               Upload
             </v-btn>
           </div>
-          <div
-            class="filesystem-dropzone"
-            :class="{ 'filesystem-dropzone--active': dragActive }"
-            @dragover.prevent="handleDragOver"
-            @dragleave.prevent="handleDragLeave"
-            @drop.prevent="handleDrop"
-          >
+          <div class="filesystem-dropzone" :class="{ 'filesystem-dropzone--active': dragActive }"
+            @dragover.prevent="handleDragOver" @dragleave.prevent="handleDragLeave" @drop.prevent="handleDrop">
             <div class="filesystem-dropzone__hint">
               <v-icon size="32">mdi-cloud-upload-outline</v-icon>
               <div class="filesystem-dropzone__hint-text">
@@ -164,107 +97,52 @@
           </div>
         </div>
 
-        <v-alert
-          v-if="!files.length"
-          type="info"
-          variant="tonal"
-          density="comfortable"
-          border="start"
-          class="mt-4"
-        >
+        <v-alert v-if="!files.length" type="info" variant="tonal" density="comfortable" border="start" class="mt-4">
           {{ emptyMessage }}
         </v-alert>
         <template v-else>
           <div class="filesystem-table__toolbar mt-4">
-            <v-text-field
-              v-model="fileSearch"
-              label="Filter files"
-              variant="outlined"
-              density="comfortable"
-              clearable
-              hide-details
-              prepend-inner-icon="mdi-magnify"
-              class="filesystem-table__filter filesystem-table__filter--search"
-            />
-            <v-select
-              v-model="fileTypeFilter"
-              :items="fileFilterOptions"
-              item-title="label"
-              item-value="value"
-              label="File type"
-              density="comfortable"
-              hide-details
-              variant="outlined"
-              class="filesystem-table__filter filesystem-table__filter--type"
-            />
+            <v-text-field v-model="fileSearch" label="Filter files" variant="outlined" density="comfortable" clearable
+              hide-details prepend-inner-icon="mdi-magnify"
+              class="filesystem-table__filter filesystem-table__filter--search" />
+            <v-select v-model="fileTypeFilter" :items="fileFilterOptions" item-title="label" item-value="value"
+              label="File type" density="comfortable" hide-details variant="outlined"
+              class="filesystem-table__filter filesystem-table__filter--type" />
             <v-chip size="small" variant="tonal" color="primary">
               {{ filteredCountLabel }}
             </v-chip>
           </div>
-        <v-data-table
-          :headers="fileTableHeaders"
-          :items="filteredFiles"
-          item-key="name"
-          v-model:items-per-page="filesPerPage"
-          v-model:page="filesPage"
-          :items-per-page-options="filesPerPageOptions"
-          density="comfortable"
-          class="filesystem-table mt-4"
-        >
-          <template #item.name="{ item }">
-            <code>{{ unwrapItem(item).name }}</code>
-          </template>
-          <template #item.size="{ item }">
-            {{ formatSize(unwrapItem(item).size) }}
-          </template>
-          <template #item.actions="{ item }">
-            <div class="filesystem-table__actions">
-              <v-btn
-                size="small"
-                variant="text"
-                color="info"
-                v-if="enablePreview && isViewable(unwrapItem(item).name)"
-                :disabled="loading || busy || saving || readOnly"
-                :icon="previewIcon(unwrapItem(item).name)"
-                :title="previewLabel(unwrapItem(item).name)"
-                :aria-label="previewLabel(unwrapItem(item).name)"
-                @click="emit('view-file', unwrapItem(item).name)"
-              />
-              <v-btn
-                size="small"
-                variant="text"
-                color="primary"
-                v-if="enableDownload"
-                :disabled="loading || busy || saving || readOnly"
-                icon="mdi-download"
-                :title="`Download ${unwrapItem(item).name}`"
-                :aria-label="`Download ${unwrapItem(item).name}`"
-                @click="emit('download-file', unwrapItem(item).name)"
-              />
-              <v-btn
-                size="small"
-                variant="text"
-                color="error"
-                :disabled="readOnly || loading || busy || saving"
-                icon="mdi-delete"
-                :title="`Delete ${unwrapItem(item).name}`"
-                :aria-label="`Delete ${unwrapItem(item).name}`"
-                @click="emit('delete-file', unwrapItem(item).name)"
-              />
-            </div>
-          </template>
-        </v-data-table>
+          <v-data-table :headers="fileTableHeaders" :items="filteredFiles" item-key="name"
+            v-model:items-per-page="filesPerPage" v-model:page="filesPage" :items-per-page-options="filesPerPageOptions"
+            density="comfortable" class="filesystem-table mt-4">
+            <template #item.name="{ item }">
+              <code>{{ unwrapItem(item).name }}</code>
+            </template>
+            <template #item.size="{ item }">
+              {{ formatSize(unwrapItem(item).size) }}
+            </template>
+            <template #item.actions="{ item }">
+              <div class="filesystem-table__actions">
+                <v-btn size="small" variant="text" color="info"
+                  v-if="enablePreview && isViewable(unwrapItem(item).name)"
+                  :disabled="loading || busy || saving || readOnly" :icon="previewIcon(unwrapItem(item).name)"
+                  :title="previewLabel(unwrapItem(item).name)" :aria-label="previewLabel(unwrapItem(item).name)"
+                  @click="emit('view-file', unwrapItem(item).name)" />
+                <v-btn size="small" variant="text" color="primary" v-if="enableDownload"
+                  :disabled="loading || busy || saving || readOnly" icon="mdi-download"
+                  :title="`Download ${unwrapItem(item).name}`" :aria-label="`Download ${unwrapItem(item).name}`"
+                  @click="emit('download-file', unwrapItem(item).name)" />
+                <v-btn size="small" variant="text" color="error" :disabled="readOnly || loading || busy || saving"
+                  icon="mdi-delete" :title="`Delete ${unwrapItem(item).name}`"
+                  :aria-label="`Delete ${unwrapItem(item).name}`" @click="emit('delete-file', unwrapItem(item).name)" />
+              </div>
+            </template>
+          </v-data-table>
         </template>
       </v-card-text>
     </v-card>
 
-    <v-alert
-      type="info"
-      variant="tonal"
-      density="comfortable"
-      border="start"
-      class="mt-4"
-    >
+    <v-alert type="info" variant="tonal" density="comfortable" border="start" class="mt-4">
       {{ status }}
     </v-alert>
 
@@ -709,6 +587,7 @@ function previewLabel(name) {
   .upload-row--split {
     grid-template-columns: 1fr 1fr;
   }
+
   .upload-row__cta {
     align-self: center;
   }
