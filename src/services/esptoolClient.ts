@@ -118,17 +118,7 @@ export function createEsptoolClient({
   }
 
   async function detectFlashSize() {
-    try {
-      if (typeof loader.detectFlashSize === 'function') {
-        return await loader.detectFlashSize();
-      }
-      if (typeof loader.getFlashSize === 'function') {
-        return await loader.getFlashSize();
-      }
-    } catch {
-      return undefined;
-    }
-    return undefined;
+    return await loader.detectFlashSize();
   }
 
   async function readChipMetadata() {
