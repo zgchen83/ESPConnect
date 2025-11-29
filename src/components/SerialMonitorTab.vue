@@ -60,6 +60,17 @@
           >
             Reset
           </v-btn>
+          <v-text-field
+            v-model="filterText"
+            density="compact"
+            variant="outlined"
+            class="monitor-filter"
+            hide-details
+            placeholder="Filter output"
+            clearable
+            prepend-inner-icon="mdi-filter"
+            @keydown.stop
+          />
         </div>
       </v-card-title>
       <v-card-subtitle class="monitor-card__subtitle text-medium-emphasis">
@@ -129,8 +140,16 @@ const props = defineProps({
 const emit = defineEmits(['start-monitor', 'stop-monitor', 'clear-monitor', 'reset-board']);
 
 const terminalEl = ref(null);
-const displayText = computed(() => props.monitorText);
-const hasMonitorOutput = computed(() => Boolean(props.monitorText && props.monitorText.length));
+const filterText = ref('');
+const displayText = computed(() => {
+  if (!filterText.value?.trim()) return props.monitorText;
+  const needle = filterText.value.toLowerCase();
+  return props.monitorText
+    .split(/\r?\n/)
+    .filter(line => line.toLowerCase().includes(needle))
+    .join('\n');
+});
+const hasMonitorOutput = computed(() => Boolean(displayText.value && displayText.value.length));
 
 watch(
   () => props.monitorText,
@@ -226,6 +245,11 @@ onMounted(() => {
   gap: 8px;
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.monitor-filter {
+  min-width: 220px;
+  max-width: 300px;
 }
 
 .monitor-card__subtitle {
