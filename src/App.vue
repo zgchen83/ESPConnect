@@ -721,20 +721,33 @@ async function loadFatfsModule() {
   return fatfsModulePromise;
 }
 
-function normalizeLittlefsEntries(entries) {
+function normalizeLittlefsEntries(entries, basePath = '/') {
   if (!Array.isArray(entries)) {
     return [];
   }
+  const base = normalizeFsPath(basePath || '/');
+  const baseName = base.split('/').filter(Boolean).pop() || '';
   return entries
     .map(entry => {
       const rawPath = (entry?.path ?? entry?.name ?? '').toString();
-      let path = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
-      path = path.replace(/\/+/g, '/');
+      let path = rawPath;
+      if (!path.startsWith('/')) {
+        const strippedBase = base.replace(/^\//, '');
+        if (strippedBase && (path === strippedBase || path.startsWith(`${strippedBase}/`))) {
+          path = `/${path}`;
+        } else {
+          path = joinFsPath(base, path);
+        }
+      }
+      path = normalizeFsPath(path);
       if (path !== '/' && path.endsWith('/')) {
         path = path.slice(0, -1);
       }
       if (!path || path === '/') {
         return null;
+      }
+      if (path === base || rawPath === baseName || rawPath === '.' || rawPath === './') {
+        return null; // skip self entries
       }
       const segments = path.split('/').filter(Boolean);
       const name = segments[segments.length - 1] || '';
@@ -909,8 +922,17 @@ async function loadLittlefsPartition(partition) {
     }
     littlefsState.client = client;
     littlefsState.currentPath = '/';
-    const entries = client.list?.('/') ?? [];
-    littlefsState.files = normalizeLittlefsEntries(entries);
+    const entries = client.list?.(littlefsState.currentPath) ?? [];
+    littlefsState.files = normalizeLittlefsEntries(entries, littlefsState.currentPath);
+    try {
+      console.info(
+        '[ESPConnect-LittleFS] initial entries @',
+        littlefsState.currentPath,
+        littlefsState.files.map(entry => `${entry.type === 'dir' ? 'dir ' : 'file'} ${entry.path}`),
+      );
+    } catch {
+      // ignore
+    }
     littlefsState.baselineFiles = littlefsState.files.map(file => ({ ...file }));
     littlefsState.dirty = false;
     littlefsState.backupDone = false;
@@ -961,8 +983,17 @@ async function refreshLittlefsListing() {
   if (!littlefsState.client) {
     return;
   }
-  const entries = littlefsState.client.list?.('/') ?? [];
-  littlefsState.files = normalizeLittlefsEntries(entries);
+  const entries = littlefsState.client.list?.(littlefsState.currentPath || '/') ?? [];
+  littlefsState.files = normalizeLittlefsEntries(entries, littlefsState.currentPath);
+  try {
+    console.info(
+      '[ESPConnect-LittleFS] entries @',
+      littlefsState.currentPath,
+      littlefsState.files.map(entry => `${entry.type === 'dir' ? 'dir ' : 'file'} ${entry.path}`),
+    );
+  } catch {
+    // ignore console errors
+  }
   updateLittlefsUsage();
 }
 
@@ -1392,7 +1423,7 @@ async function handleLittlefsView(path) {
   spiffsViewerDialog.mode = viewInfo.mode;
   spiffsViewerDialog.source = 'littlefs';
   try {
-    const data = await readLittlefsFile(name);
+    const data = await readLittlefsFile(path);
     if (data.length > SPIFFS_VIEWER_MAX_BYTES) {
       throw new Error(
         `File too large to preview (limit ${formatBytes(SPIFFS_VIEWER_MAX_BYTES) ?? SPIFFS_VIEWER_MAX_BYTES} bytes).`,
