@@ -13,11 +13,6 @@ export const FACT_ICONS: Record<string, string> = {
   'Connection Baud': 'mdi-speedometer',
   'eFuse Block Version': 'mdi-shield-key',
   'PWM/LEDC': 'mdi-waveform',
-  'Hardware Reference': 'mdi-book-open-page-variant',
-  Datasheet: 'mdi-book-open-page-variant',
-  'Technical Reference Manual': 'mdi-book-open-page-variant',
-  Errata: 'mdi-book-open-page-variant',
-  'Hardware Design Guidelines': 'mdi-book-open-page-variant',
 };
 
 export const FACT_DISPLAY_ORDER = [
