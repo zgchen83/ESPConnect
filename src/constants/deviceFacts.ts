@@ -67,6 +67,16 @@ export const FACT_GROUP_CONFIG = [
     labels: ['eFuse Block Version'],
   },
   {
+    title: 'Peripherals',
+    icon: 'mdi-waveform',
+    labels: ['PWM/LEDC'],
+  },
+  {
+    title: 'Connection',
+    icon: 'mdi-usb-port',
+    labels: ['USB Bridge', 'Connection Baud'],
+  },
+  {
     title: 'Documentation',
     icon: 'mdi-book-open-page-variant',
     labels: [
@@ -76,15 +86,5 @@ export const FACT_GROUP_CONFIG = [
       'Errata',
       'Hardware Design Guidelines',
     ],
-  },
-  {
-    title: 'Peripherals',
-    icon: 'mdi-waveform',
-    labels: ['PWM/LEDC'],
-  },
-  {
-    title: 'Connection',
-    icon: 'mdi-usb-port',
-    labels: ['USB Bridge', 'Connection Baud'],
   },
 ];
