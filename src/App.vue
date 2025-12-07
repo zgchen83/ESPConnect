@@ -5012,11 +5012,15 @@ async function stopMonitor(options = {}) {
     monitorDecoder = null;
   }
   appendLog('Serial monitor stopped.', '[ESPConnect-Debug]');
-  const restoreBaud =
-    previousMonitorBaud.value || lastFlashBaud.value || DEFAULT_FLASH_BAUD;
-  if (restoreBaud && restoreBaud !== currentBaud.value) {
+  if (closeConnection) {
+    await disconnectTransport();
+    serialMonitorClosedPrompt.value = true;
+  }
+  // const restoreBaud =
+  //   previousMonitorBaud.value || lastFlashBaud.value || DEFAULT_FLASH_BAUD;
+  if (lastFlashBaud.value) {
     try {
-      await setConnectionBaud(restoreBaud, { remember: true, log: true });
+      await setConnectionBaud(lastFlashBaud.value, { remember: true, log: true });
     } catch (error) {
       appendLog(
         `Failed to restore baud rate (${error?.message || error}). Remaining at ${currentBaud.value.toLocaleString()} bps.`,
@@ -5024,10 +5028,7 @@ async function stopMonitor(options = {}) {
       );
     }
   }
-  if (closeConnection) {
-    await disconnectTransport();
-    serialMonitorClosedPrompt.value = true;
-  }
+
 }
 
 // Pulse RTS/DTR to reset the target board.

@@ -3,6 +3,7 @@
 - Connection Tips asking to put the ESP32 into bootloader mode relies on WebSerial_ESPTool error message : "Couldn't sync to ESP. Try resetting."
 - Added Espressif documentation links (HW reference, datasheet, TRM, errata, design guides) to Device Info, with clickable URLs.
 - Automatically lower baud to 460,800 when a CH340 USB bridge is detected and notify the user ([issue #47](https://github.com/thelastoutpostworkshop/ESPConnect/issues/47)).
+- Fixed the restauration of baud rate after stopping the serial monitor
 
 ## 1.0.7
 - Switched flashing to use [WebSerial_ESPTool](https://github.com/Jason2866/WebSerial_ESPTool/tree/development) by Jason2866
