@@ -5154,7 +5154,7 @@ async function connect() {
     const portDetails = currentPort.value?.getInfo ? currentPort.value.getInfo() : null;
     const usbBridge = portDetails ? formatUsbBridge(portDetails) : "Unknown";
     const bridge = getUsbDeviceInfo(portDetails.usbVendorId, portDetails.usbProductId);
-    if (bridge.productName === 'CH340') {
+    if (bridge.productName === 'CH340' && desiredBaud != bridge.maxBaudrate) {
       desiredBaud = bridge.maxBaudrate;
       lastFlashBaud.value = desiredBaud;
       const previousSuspendState = suspendBaudWatcher;
