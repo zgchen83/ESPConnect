@@ -5243,12 +5243,12 @@ async function connect() {
     const blockVersionMinor = metadata.blockVersionMinor;
 
     const flashId = await esptool.readFlashId();
-    const manufacturerCode =
-      typeof flashId === 'number' && Number.isFinite(flashId) ? flashId & 0xff : null;
-    const memoryTypeCode =
-      typeof flashId === 'number' && Number.isFinite(flashId) ? (flashId >> 8) & 0xff : null;
-    const capacityCodeRaw =
-      typeof flashId === 'number' && Number.isFinite(flashId) ? (flashId >> 16) & 0xff : null;
+    const id = Number.isFinite(flashId) ? flashId : null;
+
+    const manufacturerCode = id !== null ? id & 0xff : null;
+    const memoryTypeCode = id !== null ? (id >> 8) & 0xff : null;
+    const capacityCodeRaw = id !== null ? (id >> 16) & 0xff : null;
+
     appendLog(
       `Flash detect raw: getFlashSize=${flashLabel ?? 'n/a'}, flashId=${typeof flashId === 'number' && Number.isFinite(flashId) ? `0x${flashId
         .toString(16)
@@ -5347,7 +5347,7 @@ async function connect() {
       const capacityBytes = JEDEC_CAPACITY_CODES[capacityCode] ?? null;
 
       const formattedCapacity = capacityBytes !== null ? formatBytes(capacityBytes) : null;
-      
+
       pushFact('Flash ID', `0x${flashId.toString(16).padStart(6, '0').toUpperCase()}`);
       pushFact(
         'Flash Manufacturer',
