@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-S2 register and layout constants (mirrors original target structure)
 export const IMAGE_CHIP_ID = 2;
 export const IROM_MAP_START = 0x40080000;
@@ -89,24 +91,7 @@ export const BOOTLOADER_FLASH_OFFSET = 0x1000;
 //   chipName?: string;
 // };
 
-type Esp32S2Metadata = {
-  description: string | undefined;
-  features: string[] | undefined;
-  crystalFreq: number | undefined;
-  macAddress: string | undefined;
-  pkgVersion: number | undefined;
-  chipRevision: number | undefined;
-  majorVersion: number | undefined;
-  minorVersion: number | undefined;
-  flashVendor: string | undefined;
-  psramVendor: string | undefined;
-  flashCap: number | undefined;
-  psramCap: number | undefined;
-  blockVersionMajor: number | undefined;
-  blockVersionMinor: number | undefined;
-};
-
-export async function readEsp32S2Metadata(loader: any): Promise<Esp32S2Metadata> {
+export async function readEsp32S2Metadata(loader: any): Promise<ChipMetadata> {
   const readReg = (addr: number) => loader.readReg(addr);
 
   const getPkgVersion = async () => {

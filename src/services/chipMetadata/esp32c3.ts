@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-C3 register and layout constants (mirrors original target structure)
 export const CHIP_NAME = 'ESP32-C3';
 export const IMAGE_CHIP_ID = 5;
@@ -38,24 +40,7 @@ export const MEMORY_MAP: Array<[number, number, string]> = [
 //   chipName?: string;
 // };
 
-type Esp32C3Metadata = {
-  description: string | undefined;
-  features: string[] | undefined;
-  crystalFreq: number | undefined;
-  macAddress: string | undefined;
-  pkgVersion: number | undefined;
-  chipRevision: number | undefined;
-  majorVersion: number | undefined;
-  minorVersion: number | undefined;
-  flashVendor: string | undefined;
-  psramVendor: string | undefined;
-  flashCap: number | undefined;
-  psramCap: number | undefined;
-  blockVersionMajor: number | undefined;
-  blockVersionMinor: number | undefined;
-};
-
-export async function readEsp32C3Metadata(loader: any): Promise<Esp32C3Metadata> {
+export async function readEsp32C3Metadata(loader: any): Promise<ChipMetadata> {
   const readReg = (addr: number) => loader.readReg(addr);
 
   const getPkgVersion = async () => {

@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // Minimal ESP32-S31 metadata helper (constants mirrored from legacy target for reference)
 export const CHIP_NAME = 'ESP32-S31';
 export const IMAGE_CHIP_ID = 32;
@@ -12,7 +14,7 @@ export const BOOTLOADER_FLASH_OFFSET = 0;
 //   macAddr?: () => number[];
 // };
 
-export async function readEsp32S31Metadata(loader: any) {
+export async function readEsp32S31Metadata(loader: any): Promise<ChipMetadata> {
   const mac = typeof loader.macAddr === 'function' ? safeMac(loader) : undefined;
   return {
     description: loader.chipName ?? CHIP_NAME,

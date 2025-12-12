@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-C61 constants and metadata helpers (mirrors legacy target structure)
 export const CHIP_NAME = 'ESP32-C61';
 export const IMAGE_CHIP_ID = 20;
@@ -97,7 +99,7 @@ export const KEY_PURPOSES: Record<number, string> = {
 //   readReg: (addr: number) => Promise<number>;
 // };
 
-export async function readEsp32C61Metadata(loader: any) {
+export async function readEsp32C61Metadata(loader: any): Promise<ChipMetadata> {
   const readEfuse = async (wordIndex: number) => loader.readReg(EFUSE_BLOCK1_ADDR + 4 * wordIndex);
 
   const getPkgVersion = async () => {

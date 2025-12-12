@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-H2 constants and metadata helpers (mirrors legacy target structure)
 export const CHIP_NAME = 'ESP32-H2';
 export const IMAGE_CHIP_ID = 16;
@@ -47,7 +49,7 @@ export const MEMORY_MAP: Array<[number, number, string]> = [
 //   readReg: (addr: number) => Promise<number>;
 // };
 
-export async function readEsp32H2Metadata(loader: any) {
+export async function readEsp32H2Metadata(loader: any): Promise<ChipMetadata> {
   const readEfuse = async (wordIndex: number) => loader.readReg(EFUSE_BLOCK1_ADDR + 4 * wordIndex);
 
   const getPkgVersion = async () => {

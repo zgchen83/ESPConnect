@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-S3 register and layout constants (mirrors original target structure)
 export const IMAGE_CHIP_ID = 9;
 export const EFUSE_BASE = 0x60007000;
@@ -43,24 +45,7 @@ export const MEMORY_MAP: Array<[number, number, string]> = [
 //   chipName?: string;
 // };
 
-type Esp32S3Metadata = {
-  description: string | undefined;
-  features: string[] | undefined;
-  crystalFreq: number | undefined;
-  macAddress: string | undefined;
-  pkgVersion: number | undefined;
-  chipRevision: number | undefined;
-  majorVersion: number | undefined;
-  minorVersion: number | undefined;
-  flashVendor: string | undefined;
-  psramVendor: string | undefined;
-  flashCap: number | undefined;
-  psramCap: number | undefined;
-  blockVersionMajor: number | undefined;
-  blockVersionMinor: number | undefined;
-};
-
-export async function readEsp32S3Metadata(loader: any): Promise<Esp32S3Metadata> {
+export async function readEsp32S3Metadata(loader: any): Promise<ChipMetadata> {
   const readReg = (addr: number) => loader.readReg(addr);
 
   const getPkgVersion = async () => ((await readReg(EFUSE_BLOCK1_ADDR + 4 * 3)) >> 21) & 0x07;

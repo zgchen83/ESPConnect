@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP8266 constants and metadata helpers (mirrors legacy target structure)
 export const CHIP_NAME = 'ESP8266';
 export const CHIP_DETECT_MAGIC_VALUE = [0xfff0c101];
@@ -55,7 +57,7 @@ export const SPI_W0_OFFS = 0x40;
 //   // transport?: { baudrate?: number };
 // };
 
-export async function readEsp8266Metadata(loader: any) {
+export async function readEsp8266Metadata(loader: any): Promise<ChipMetadata> {
   const readEfuse = async (offset: number) => {
     const addr = EFUSE_RD_REG_BASE + 4 * offset;
     return loader.readReg(addr);

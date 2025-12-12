@@ -1,6 +1,7 @@
 import { ESPLoader } from 'tasmota-webserial-esptool';
 import type { Logger } from 'tasmota-webserial-esptool/dist/const.js';
 import type {} from '../types/web-serial';
+import type { ChipMetadata } from './chipMetadata/types';
 import {
   CHIP_FAMILY_ESP32S3,
   CHIP_FAMILY_ESP32S2,
@@ -64,7 +65,7 @@ export interface ConnectHandshakeResult {
   chipName: string;
   macAddress?: string;
   securityFacts: SecurityFact[];
-  flashSize :string | null;
+  flashSize?: string | null;
 }
 
 export interface EsptoolClient {
@@ -75,22 +76,7 @@ export interface EsptoolClient {
   changeBaud: (baud: number) => Promise<void>;
   readPartitionTable: (offset?: number, length?: number) => Promise<any[]>;
   readFlashId: () => Promise<number | undefined>;
-  readChipMetadata: () => Promise<{
-    description: string | undefined;
-    features: any;
-    crystalFreq: any;
-    macAddress: any;
-    pkgVersion: any;
-    chipRevision: any;
-    majorVersion: any;
-    minorVersion: any;
-    flashVendor: any;
-    psramVendor: any;
-    flashCap: any;
-    psramCap: any;
-    blockVersionMajor: any;
-    blockVersionMinor: any;
-  }>;
+  readChipMetadata: () => Promise<ChipMetadata>;
 }
 
 type WriteFlashOptions = {
@@ -504,7 +490,7 @@ export function createEsptoolClient({
     }
   }
 
-  async function readChipMetadata() {
+  async function readChipMetadata(): Promise<ChipMetadata> {
     setBusy(true);
     try {
       const chipFamily =loader.getChipFamily();

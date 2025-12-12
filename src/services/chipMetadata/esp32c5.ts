@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32-C5 constants and metadata helpers (mirrors legacy target structure)
 export const CHIP_NAME = 'ESP32-C5';
 export const IMAGE_CHIP_ID = 23;
@@ -104,7 +106,7 @@ export const KEY_PURPOSES: Record<number, string> = {
 //   // info?: (msg: string) => void;
 // };
 
-export async function readEsp32C5Metadata(loader: any) {
+export async function readEsp32C5Metadata(loader: any): Promise<ChipMetadata> {
   const readEfuse = async (wordIndex: number) => loader.readReg(EFUSE_BLOCK1_ADDR + 4 * wordIndex);
 
   const getPkgVersion = async () => {

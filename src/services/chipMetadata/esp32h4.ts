@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // Minimal ESP32-H4 metadata helper (constants mirrored from legacy target for reference)
 export const CHIP_NAME = 'ESP32-H4';
 export const IMAGE_CHIP_ID = 28;
@@ -12,7 +14,7 @@ export const BOOTLOADER_FLASH_OFFSET = 0;
 //   macAddr?: () => number[];
 // };
 
-export async function readEsp32H4Metadata(loader: any) {
+export async function readEsp32H4Metadata(loader: any): Promise<ChipMetadata> {
   const mac = typeof loader.macAddr === 'function' ? safeMac(loader) : undefined;
   return {
     description: loader.chipName ?? CHIP_NAME,

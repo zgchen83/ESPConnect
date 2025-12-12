@@ -1,3 +1,5 @@
+import type { ChipMetadata } from './types';
+
 // ESP32 constants and metadata readers (mirrors legacy target structure)
 export const CHIP_NAME = 'ESP32';
 export const IMAGE_CHIP_ID = 0;
@@ -66,7 +68,7 @@ export const SPI_MISO_DLEN_OFFS = 0x2c;
 //   readReg: (addr: number) => Promise<number>;
 // };
 
-export async function readEsp32Metadata(loader: any) {
+export async function readEsp32Metadata(loader: any): Promise<ChipMetadata> {
   const readEfuse = async (offset: number) => loader.readReg(EFUSE_RD_REG_BASE + 4 * offset);
 
   const getPkgVersion = async () => {
