@@ -3197,6 +3197,14 @@ type ConfirmationOptions = {
   destructive?: boolean;
 };
 
+type LoadAppMetadataOptions = {
+  force?: boolean;
+};
+
+type ResetOptions = {
+  silent?: boolean;
+};
+
 // Write a filesystem image to flash with progress callbacks.
 async function writeFilesystemImage(partition: any, image: Uint8Array | ArrayBuffer, options: WriteFilesystemOptions = {}) {
   const { onProgress, label = 'filesystem', state, compress = true } = options;
@@ -4193,7 +4201,7 @@ function resetAppMetadata() {
 }
 
 // Load application metadata from flash partitions.
-async function loadAppMetadata(options = {}) {
+async function loadAppMetadata(options: LoadAppMetadataOptions = {}) {
   const force = options.force ?? false;
   if (appMetadataLoading.value) {
     return;
@@ -5100,7 +5108,7 @@ async function stopMonitor(options = {}) {
 }
 
 // Pulse RTS/DTR to reset the target board.
-async function resetBoard(options = {}) {
+async function resetBoard(options: ResetOptions = {}) {
   const { silent = false } = options;
   if (!transport.value) {
     appendLog('Cannot reset: transport not available.', '[ESPConnect-Warn]');
