@@ -505,10 +505,7 @@ export function createEsptoolClient({
   async function readChipMetadata() {
     setBusy(true);
     try {
-      const chipFamily =
-        typeof (loader as any).getChipFamily === 'function'
-          ? (loader as any).getChipFamily()
-          : (loader as any).chipFamily;
+      const chipFamily =loader.getChipFamily();
 
       if (chipFamily === CHIP_FAMILY_ESP32S3) {
         const meta = await readEsp32S3Metadata(loader);
