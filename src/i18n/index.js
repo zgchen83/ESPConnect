@@ -619,13 +619,22 @@ function createToggleButton() {
     .v-app-bar .v-chip.v-theme--dark.bg-grey-darken-1.v-chip--density-comfortable.v-chip--size-default.v-chip--variant-elevated.text-capitalize {
         margin-right: 16px !important;
       }
+    .v-app-bar .v-chip.v-theme--dark.bg-success.v-chip--density-comfortable.v-chip--size-default.v-chip--variant-elevated.text-capitalize {
+        margin-right: 16px !important;
+      }
+    .v-app-bar .v-chip.v-theme--light.bg-grey-darken-1.v-chip--density-comfortable.v-chip--size-default.v-chip--variant-elevated.text-capitalize {
+        margin-right: 16px !important;
+      }
+    .v-app-bar .v-chip.v-theme--light.bg-success.v-chip--density-comfortable.v-chip--size-default.v-chip--variant-elevated.text-capitalize {
+        margin-right: 16px !important;
+      }
     .v-app-bar .v-btn.v-btn--icon.v-theme--dark.v-btn--density-default.v-btn--size-small.v-btn--variant-text {
         margin-right: 16px !important;
       }
-    .v-app-bar .v-btn.v-btn--icon.v-theme--light.v-btn--density-default.v-btn--size-small.v-btn--variant-text.i18n-toggle-btn {
+    .v-app-bar .v-btn.v-btn--icon.v-theme--light.v-btn--density-default.v-btn--size-small.v-btn--variant-text {
         margin-right: 16px !important;
       }
-    .v-app-bar .v-chip.v-theme--dark.bg-success.v-chip--density-comfortable.v-chip--size-default.v-chip--variant-elevated.text-capitalize {
+    .v-app-bar .v-btn.v-btn--icon.v-theme--light.v-btn--density-default.v-btn--size-small.v-btn--variant-text.i18n-toggle-btn {
         margin-right: 16px !important;
       }
   `;
