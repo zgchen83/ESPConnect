@@ -2,6 +2,7 @@
 
 ## 1.0.12
 - Moved WASM modules from public/ to src/ to ensure proper Vite module handling and eliminate dev/build import errors.
+- Renamed "Download used flash" to "Dowload flash backup" in Flash Tools
 
 ## 1.0.11
 - Added standalone electron app in release assets by Jason2866 ([PR #56](https://github.com/thelastoutpostworkshop/ESPConnect/pull/56)).
