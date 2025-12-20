@@ -984,25 +984,29 @@ function parseWithVersion(data: Uint8Array, version: NvsVersion): NvsParseResult
 
 export function parseNvsPartition(data: Uint8Array): NvsParseResult {
   const detected = detectNvsVersion(data);
+
   if (detected.version === 1 || detected.version === 2) {
     const result = parseWithVersion(data, detected.version);
-    if (
-      detected.reason &&
-      (detected.reason.startsWith('Mixed page versions') || detected.version === 0)
-    ) {
+
+    if (detected.reason.startsWith('Mixed page versions')) {
       result.warnings.unshift(detected.reason);
     }
 
     return result;
   }
 
+  // detection failed → heuristic fallback
   const v2 = parseWithVersion(data, 2);
   const v1 = parseWithVersion(data, 1);
 
-  const score = (res: NvsParseResult) => res.entries.length * 2 + res.namespaces.length - res.errors.length * 3;
+  const score = (res: NvsParseResult) =>
+    res.entries.length * 2 + res.namespaces.length - res.errors.length * 3;
+
   const chosen = score(v2) >= score(v1) ? v2 : v1;
   chosen.warnings.unshift(
     `NVS version detection failed: ${detected.reason} (heuristic parse picked v${chosen.version}).`,
   );
+
   return chosen;
 }
+
