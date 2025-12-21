@@ -42,8 +42,8 @@
       </v-card-text>
     </v-card>
 
-    <div v-if="result" class="mt-6 d-flex flex-column gap-4">
-      <v-row>
+    <div class="mt-6 d-flex flex-column gap-4">
+      <v-row v-if="result">
         <v-col cols="12" sm="6" md="3">
           <v-card variant="tonal" class="pa-4">
             <div class="text-overline text-medium-emphasis">NVS Version</div>
@@ -76,7 +76,20 @@
         </v-col>
       </v-row>
 
-      <v-card variant="tonal">
+      <v-tabs v-model="activeTab" density="comfortable" color="primary">
+        <v-tab value="keys">Keys</v-tab>
+        <v-tab value="pages">Pages</v-tab>
+      </v-tabs>
+
+      <v-window v-model="activeTab">
+        <v-window-item value="keys">
+          <div class="d-flex flex-column gap-4">
+            <v-alert v-if="!result" type="info" variant="tonal" border="start">
+              Read NVS to see keys.
+            </v-alert>
+
+            <template v-else>
+              <v-card variant="tonal">
         <v-card-title class="d-flex align-center justify-space-between">
           <span>Keys</span>
           <v-chip size="large" variant="tonal" color="primary">
@@ -215,6 +228,61 @@
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
+            </template>
+          </div>
+        </v-window-item>
+
+        <v-window-item value="pages">
+          <div class="d-flex flex-column gap-4">
+            <v-alert v-if="!result" type="info" variant="tonal" border="start">
+              Read NVS to see pages.
+            </v-alert>
+
+            <v-card v-else variant="tonal">
+              <v-card-title class="d-flex align-center justify-space-between">
+                <span>Pages</span>
+                <v-chip size="large" variant="tonal" color="primary">
+                  {{ result.pages.length.toLocaleString() }} total
+                </v-chip>
+              </v-card-title>
+
+              <v-card-text>
+                <v-table density="compact" class="nvs-inspector__pages-table">
+                  <thead>
+                    <tr>
+                      <th class="text-start">Page #</th>
+                      <th class="text-start">State</th>
+                      <th class="text-end">Seq</th>
+                      <th class="text-center">Valid</th>
+                      <th class="text-end">Errors</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="page in result.pages" :key="page.index">
+                      <td><code>{{ page.index }}</code></td>
+                      <td><code>{{ page.state }}</code></td>
+                      <td class="text-end">
+                        <span v-if="true">{{ typeof page.seq === 'number' ? page.seq.toLocaleString() : '\u2014' }}</span>
+                        <span v-else class="text-medium-emphasis">—</span>
+                      </td>
+                      <td class="text-center">
+                        <v-chip v-if="page.valid" size="small" color="success" variant="tonal">OK</v-chip>
+                        <v-chip v-else size="small" color="error" variant="tonal">BAD</v-chip>
+                      </td>
+                      <td class="text-end">
+                        <v-chip v-if="page.errors.length" size="small" color="error" variant="tonal">
+                          {{ page.errors.length }}
+                        </v-chip>
+                        <span v-else class="text-medium-emphasis">0</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </v-card-text>
+            </v-card>
+          </div>
+        </v-window-item>
+      </v-window>
     </div>
   </div>
 </template>
@@ -255,9 +323,17 @@ type NvsEntry = {
   warnings?: string[];
 };
 
+type NvsPage = {
+  index: number;
+  state: string;
+  seq: number | null;
+  valid: boolean;
+  errors: string[];
+};
+
 type NvsResult = {
   version: number;
-  pages: Array<{ valid: boolean }>;
+  pages: NvsPage[];
   namespaces: Array<unknown>;
   entries: Array<NvsEntry>;
   warnings: string[];
@@ -278,6 +354,16 @@ const emit = defineEmits<{
   (e: 'select-partition', value: number | string | null): void;
   (e: 'read-nvs'): void;
 }>();
+
+type ResultTab = 'keys' | 'pages';
+const activeTab = ref<ResultTab>('pages');
+watch(
+  () => props.result,
+  result => {
+    activeTab.value = result?.entries?.length ? 'keys' : 'pages';
+  },
+  { immediate: true },
+);
 
 const autoReadRequested = ref(false);
 watch(
@@ -394,5 +480,9 @@ const filteredEntries = computed(() => {
 .nvs-inspector__list {
   margin: 0;
   padding-left: 18px;
+}
+
+.nvs-inspector__pages-table code {
+  font-size: 0.85rem;
 }
 </style>
