@@ -2,20 +2,14 @@ import { createApp } from 'vue';
 import App from './App.vue';
 
 import 'vuetify/styles';
-import { createVuetify } from 'vuetify';
-import * as components from 'vuetify/components';
-import * as directives from 'vuetify/directives';
-
 import '@mdi/font/css/materialdesignicons.css';
 import './style.css';
 
-// Internationalization support - Enable Chinese/English switching with just this one line.
-import { initI18n } from './i18n/index.js';
+import vuetify from './plugins/vuetify';
+import { i18n } from './plugins/i18n';
 
-const vuetify = createVuetify({
-  components,
-  directives,
-});
+const app = createApp(App);
 
-createApp(App).use(vuetify).mount('#app');
-initI18n();
+app.use(vuetify);
+app.use(i18n);
+app.mount('#app');

@@ -120,13 +120,16 @@
       </v-card>
     </div>
     <div v-else key="device-info-empty" class="device-info-empty">
-      <DisconnectedState subtitle="Connect to an ESP32 to see device information." />
+<DisconnectedState
+      :title="t('disconnected.defaultTitle')"
+      :subtitle="t('disconnected.deviceInfo')" />
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import DisconnectedState from './DisconnectedState.vue';
 import { PRIMARY_FACTS } from '../constants/deviceFacts';
 import type { DeviceDetails, DeviceFact } from '../types/device-details';
@@ -141,6 +144,8 @@ const props = withDefaults(
     chipDetails: null,
   },
 );
+
+const { t } = useI18n();
 
 const urlPattern = /^https?:\/\//i;
 const isUrl = (value: unknown): value is string => typeof value === 'string' && urlPattern.test(value);
