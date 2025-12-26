@@ -86,10 +86,7 @@ ESPConnect is published in two variants:
 > ⚠️ The preview build is provided for testing and feedback only.  
 > If you encounter issues, please report them along with whether they occurred on **stable** or **preview**.
 ## Localization contributions
-- Add a new locale file under `src/locales/` (e.g. `fr.ts`) that exports the same structure used by `en.ts`/`zh.ts`. Most keys are nested under sections like `app`, `navigation`, `deviceInfo`, etc.; copy your preferred base (English is a good reference) and translate the strings.
-- Wire the locale into the app by importing it in `src/plugins/i18n.ts`, adding it to `baseMessages`/`mergedMessages`, and extending `supportedLocales` with the new language code so the router can load it dynamically.
-- Keep Vuetify in sync by providing the same `$vuetify` overrides as other locales (`vuetify/locale/adapters/vue-i18n` integration) so component strings like pagination labels stay localized.
-- Document the language name in `src/locales/en.ts`’s `language` block (and its translation in your new locale) so the UI can display the option in the language menu.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for workspace setup, branch/commit conventions, release/testing expectations, and step-by-step translation guidance.
 ## Tips & Troubleshooting
 - If automatic boot entry fails, hold **BOOT**, tap **RESET**, keep holding **BOOT** while clicking **Connect**, then release when you see the ESP-ROM banner.  
 - Only one application can use the USB serial bridge at a time. Close Arduino IDE, PlatformIO, or other tools before connecting.  
@@ -123,6 +120,7 @@ cd ESPConnect
 npm install
 npm run dev
 ```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for workspace setup, branch/commit conventions, and release/testing expectations.
 ### 3. Run ESPConnect via Docker
 
 ```bash
