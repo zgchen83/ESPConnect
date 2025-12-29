@@ -6,7 +6,7 @@
 - Failed detection of flashid is now non-fatal
 
 ### Fixed 
-- FATFS is now using 4096 bytes for logical sectors
+- FATFS is now using 4096 bytes for logical sectors ([issue #92](https://github.com/thelastoutpostworkshop/ESPConnect/issues/92)).
 - Ensure ESP32 SPIFFS headers reserve the default 4 bytes of metadata to match the ESP-IDF layout related to ([issue #77](https://github.com/thelastoutpostworkshop/ESPConnect/issues/77)).
 
 ### Internal
