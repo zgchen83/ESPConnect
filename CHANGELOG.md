@@ -1,5 +1,7 @@
 # Changelog
 
+## 1.1.7
+
 ## 1.1.6
 ### Improvement
 - Serial Monitor now lets you send text input, including Ctrl+C, suggest by ator1811 ([issue #90](https://github.com/thelastoutpostworkshop/ESPConnect/issues/90)).
