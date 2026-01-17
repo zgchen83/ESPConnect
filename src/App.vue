@@ -4651,7 +4651,8 @@ async function analyzeAppPartitions(loaderInstance: ESPLoader, partitions: Parti
     .sort((a, b) => (a.subtype ?? 0) - (b.subtype ?? 0));
 
   let activeSlotId: string | null = null;
-  let activeSummary = 'Active slot unknown.';
+  let activeSummary: string | null = null;
+  let otadataSelectionUnavailable = false;
   const otadataEntry = partitions.find(entry => entry.type === 0x01 && entry.subtype === 0x02);
   if (otadataEntry && otaEntries.length) {
     try {
@@ -4690,21 +4691,27 @@ async function analyzeAppPartitions(loaderInstance: ESPLoader, partitions: Parti
       const detected = detectActiveOtaSlot(combinedOtadata, otaEntries);
       if (detected.slotId) {
         activeSlotId = detected.slotId;
-        activeSummary = detected.summary;
+      } else if (detected.summary === 'No valid OTA selection found') {
+        otadataSelectionUnavailable = true;
       }
+      activeSummary = detected.summary;
     } catch (error) {
       appendLog('Failed to read OTA data partition', error);
       appMetadataError.value = 'Unable to read OTA metadata.';
     }
   }
 
-  if (!activeSlotId) {
+  if (!activeSlotId && !otadataSelectionUnavailable) {
     if (factoryEntry) {
       activeSlotId = 'factory';
-      activeSummary = 'Active slot: factory (fallback)';
+      activeSummary = activeSummary ?? 'Active slot: factory (fallback)';
     } else {
-      activeSummary = 'Active slot unknown.';
+      activeSummary = activeSummary ?? 'Active slot unknown.';
     }
+  }
+
+  if (!activeSummary) {
+    activeSummary = 'Active slot unknown.';
   }
 
   const results: AppPartitionMetadata[] = [];
@@ -4804,7 +4811,7 @@ async function analyzeAppPartitions(loaderInstance: ESPLoader, partitions: Parti
   let resolvedSummary = activeSummary;
   const activeInfoCandidate = resolvedSlotId ? results.find(info => info.slotLabel === resolvedSlotId) ?? null : null;
 
-  if (!activeInfoCandidate || !activeInfoCandidate.valid) {
+  if (!otadataSelectionUnavailable && (!activeInfoCandidate || !activeInfoCandidate.valid)) {
     const fallbackCandidates = [
       results.find(info => info.valid && info.slotLabel === 'factory'),
       results.find(info => info.valid && info.slotLabel.startsWith('ota_')),
@@ -4821,6 +4828,9 @@ async function analyzeAppPartitions(loaderInstance: ESPLoader, partitions: Parti
       resolvedSlotId = null;
       resolvedSummary = 'Active slot invalid.';
     }
+  } else if (otadataSelectionUnavailable) {
+    resolvedSlotId = null;
+    resolvedSummary = activeSummary;
   }
 
   for (const info of results) {
